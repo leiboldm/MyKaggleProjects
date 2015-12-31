@@ -9,13 +9,13 @@ from sklearn import cross_validation
 # takes pandas DataFrame and returns sklearnable matrix
 def preprocess(data):
     print "Preprocessing"
-    with open('cats.json', 'r') as f:
-        cat_cols = json.load(f)
     categoricals = list()
     data = pandas.get_dummies(data)
     cols = data.columns
     for i, col in enumerate(cols):
-        if col in cat_cols:
+        datatype = str(type(data[col][0]))
+        unique_vals = len(data[col].unique())
+        if unique_vals < 12 and 'float' not in datatype:
             categoricals.append(i)
     data = Imputer().fit_transform(data)
     mat = OneHotEncoder(categorical_features=categoricals).fit_transform(data) 
