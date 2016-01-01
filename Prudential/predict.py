@@ -30,18 +30,23 @@ cat_feats = ['Medical_History_39', 'Medical_History_5', 'Medical_History_18',
             'Medical_History_34', 'Medical_History_41', 'Product_Info_7', 
             'Medical_History_26', 'Insurance_History_3', 'Medical_History_2']
 
+ordinals = ['Product_Info_4', 'Ins_Age', 'Ht', 'Wt', 'BMI', 'Employment_Info_1', 'Employment_Info_4',
+    'Employment_Info_6', 'Insurance_History_5', 'Family_Hist_2', 'Family_Hist_3',
+    'Family_Hist_4', 'Family_Hist_5', 'Medical_History_1', 'Medical_History_10', 
+    'Medical_History_15', 'Medical_History_24', 'Medical_History_32']
+
 # takes pandas DataFrame and returns sklearnable matrix
 def preprocess(data):
     print "Preprocessing"
     categoricals = list()
-    #data = data[lf + cat_feats[-5:]]
     data = pandas.get_dummies(data)
-    #data = data.fillna(0)
+    #for feat in ordinals:
+        #data[feat + 'sq'] = data[feat] * data[feat]
     cols = data.columns
     for i, col in enumerate(cols):
         datatype = str(type(data[col][0]))
         unique_vals = len(data[col].unique())
-        if unique_vals < 12 and 'float' not in datatype:
+        if unique_vals < 12 and 'float' not in datatype and False:
             categoricals.append(i)
     data = Imputer(strategy='most_frequent').fit_transform(data)
     mat = OneHotEncoder(categorical_features=categoricals).fit_transform(data) 
@@ -92,23 +97,23 @@ if __name__ == "__main__":
     test_ids = test_df['Id'].get_values() # get a list of Id values for use in creating submission
     test_df = test_df[columns] # remove Id variable from test data
 
-    total_data = preprocess(pandas.concat([train_df, test_df], ignore_index=True)).todense()
+    total_data = preprocess(pandas.concat([train_df, test_df], ignore_index=True))#.todense()
     train_mat = total_data[0:len(labels)]
     test_mat = total_data[len(labels):]
 
-    itrain_X, val_X, itrain_Y, val_Y = cross_validation.train_test_split(train_mat, labels, test_size=0.25)
-    xgtrain = xgboost.DMatrix(itrain_X, label=itrain_Y)
-    xgval = xgboost.DMatrix(val_X, label=val_Y)
-    watchlist = [(xgtrain, 'train'), (xgval, 'val')]
-    #xgtrain = xgboost.DMatrix(train_mat, label=labels)
-    #xgtest = xgboost.DMatrix(test_mat)
-    #watchlist = [(xgtrain, 'train')]
-    params = dict(objective="reg:linear", eta=0.03, max_depth=7, silent=1,
+    #itrain_X, val_X, itrain_Y, val_Y = cross_validation.train_test_split(train_mat, labels, test_size=0.25)
+    #xgtrain = xgboost.DMatrix(itrain_X, label=itrain_Y)
+    #xgval = xgboost.DMatrix(val_X, label=val_Y)
+    #watchlist = [(xgtrain, 'train'), (xgval, 'val')]
+    xgtrain = xgboost.DMatrix(train_mat, label=labels)
+    xgtest = xgboost.DMatrix(test_mat)
+    watchlist = [(xgtrain, 'train')]
+    params = dict(objective="reg:linear", eta=0.03, max_depth=9, silent=1,
                   subsample=0.9, colsample_bytree=1)
     print "Training"
-    bst = xgboost.train(params, xgtrain, 680, watchlist)
+    bst = xgboost.train(params, xgtrain, 500, watchlist)
 
-    output(xgtest, test_ids, bst, 'xgregOutput.csv', regression=True)
+    output(xgtest, test_ids, bst, 'xgregOutput-md9.csv', regression=True)
     #pred = bst.predict(xgtest)
 
     """

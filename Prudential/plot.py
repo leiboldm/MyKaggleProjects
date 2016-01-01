@@ -1,5 +1,6 @@
 import pandas
 import sys
+import math
 import matplotlib.pyplot as plt
 
 col = sys.argv[1]
@@ -21,7 +22,7 @@ for i in range(0, 40):
         yavg = sum(ys.get_values()) / float(len(ys))
         y.append(yavg)
         x.append(xmin + i * intx)
-        area.append(len(ys))
+        area.append(math.sqrt(len(ys)))
 
 plt.scatter(x, y, s=area, alpha=0.5)
 plt.show()
